@@ -1,4 +1,8 @@
-)
+
+library(ggplot2)
+library(rstan)
+source('generate_scr_data.R')
+
 # Generate Fake Data
 cfg = list(plotData = T,
           nsub = 1,
@@ -29,18 +33,24 @@ if(cfg$plotData) ggplot(data.sim,aes(x=time,y=scr,color=factor(subject)))+geom_p
 
 data_stan <- list(
   ntime=cfg$ntime, # number of timepoints
-  ntrial=cfg$nonsets, # number of timepoints
+  ntrial=cfg$nonsets*2, # number of onsets * nconditions
   ncondition = 2, # number of conditions
   scr = data.sim$scr,
   onset = data$onset, # 
   condition = data$condition # which Condition [a/b]?
-  
 )
+
 
 model_1 <- stan_model(file = 'scr_model1.stan')
 #model_1b <- stan_model(file = 'model_1_twoColor_multiTrial.stan')
+
+#model_2_wavelength <- stan_model(file = 'model_2_wavelength.stan')
+model_1a <- stan_model(file = 'scr_model1.stan')
+
 #model_1c <- stan_model(file = 'model_1_twoColor_multiTrial_hierarchical.stan')
-fit <- sampling(model_1b,data = data_stan, algorithm='NUTS',
+fit <- sampling(model_1a,data = data_stan, algorithm='NUTS',
                 iter = 500, chains = 1,refresh=1)
+
+traceplot(fit,pars=c('amp','latency','tau1','tau2'))
 
 # Evaluate Fit
