@@ -1,4 +1,4 @@
-
+)
 # Generate Fake Data
 cfg = list(plotData = T,
           nsub = 1,
@@ -37,7 +37,7 @@ data_stan <- list(
   
 )
 
-#model_2_wavelength <- stan_model(file = 'model_2_wavelength.stan')
+model_1 <- stan_model(file = 'scr_model1.stan')
 #model_1b <- stan_model(file = 'model_1_twoColor_multiTrial.stan')
 #model_1c <- stan_model(file = 'model_1_twoColor_multiTrial_hierarchical.stan')
 fit <- sampling(model_1b,data = data_stan, algorithm='NUTS',
