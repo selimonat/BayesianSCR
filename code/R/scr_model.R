@@ -12,6 +12,7 @@ scr_model = function(x,onsets,amp,latency,tau1,tau2){
   y      = rep(0,length(x));
   for (e in 1:length(onsets)){;
     xx         = x - onsets[e]-latency[e];
+    
     c          = amp[e]/maxamp;
     
     y[xx>=0]   = y[xx>=0] + c * (exp(-xx[xx>=0]/tau1) - exp(-xx[xx>=0]/(tau2)));

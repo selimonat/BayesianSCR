@@ -41,24 +41,24 @@ transformed parameters {
   
   
   { #curly brackets allow for local integer usage
-    int xx[ntime];
-    int x[ntime];
+    real xx[ntime];
+    real x[ntime];
   real c;
   
   maxx   <- tau1 * tau2 * log(tau1/tau2) / (tau1 - tau2);
-  maxamp <- abs(exp(-maxx/tau2) - exp(-maxx/tau1));
+  maxamp <- fabs(exp(-maxx/tau2) - exp(-maxx/tau1));
   x <- sort_indices_asc(scr);
   scr_hat      <- rep_array(0,ntime);
   for(tr in 1:ntrial){
       #xx        = x - onsets[e]-latency[e];
-      for (time in 1:ntime){
-        xx[time]         <- x[time] - onset[tr]- latency[condition[tr]];
+      for (t in 1:ntime){
+        xx[t]         <- x[t] - onset[tr]- latency[condition[tr]];
       }
       c          <- amp[condition[tr]]/maxamp;
       
-      for(time in 1:ntime){
-        if (xx[time]>=0){
-      scr_hat[xx[time]]   <- scr_hat[xx[time]] + c * (exp(-xx[time]/tau1) - exp(-xx[time]/(tau2)));
+      for(t in 1:ntime){
+        if (xx[t]>=0){
+            scr_hat[t]   <- scr_hat[t] + c * (exp(-xx[t]/tau1) - exp(-xx[t]/(tau2)));
         }
       }
   } 
