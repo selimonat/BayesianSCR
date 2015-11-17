@@ -44,7 +44,7 @@ posterior_predictive_group = function(params_org,x,niter=100,nsubjects=10,onsets
   nameList = names(params)
   for(n in seq(1,length(nameList),2)){
     sub_niter = NULL  
-    for(s in 1:10){
+    for(sub in 1:nsubjects){
       val = rnorm(rep(1,niter),params[iterIdx,nameList[n]], params[iterIdx,nameList[n+1]])
       if(nameList[n] == 'm_scr_sigma' || nameList[n] == 'amp.1' || nameList[n] == 'amp.2'||nameList[n] == 'm_tau1' || nameList[n] == 'm_tau2'){ # we need to make sure, that m_scr_sigma is positive!
         while(any(val<=0)){
@@ -68,9 +68,10 @@ posterior_predictive_group = function(params_org,x,niter=100,nsubjects=10,onsets
   
   dat.all  =NULL
   for(sub in 1:nsubjects){
-    for(it in niter){
-      show(sprintf('subject  %i',sub))
-      dat.all = rbind(dat.all,cbind(sub =sub,iter=it,time=x,
+    show(sprintf('subject  %i',sub))
+    for(it in 1:niter){
+      
+      dat.all = rbind(dat.all,cbind(subject =sub,iter=it,time=x,
                                     scr=scr_model(x,onsets = onsets$onset[onsets$subject==sub],latency = c(rep(latency.1_samp[sub,it],sum(onsets$condition[onsets$subject==sub]==1)),
                                                                                                            rep(latency.2_samp[sub,it],sum(onsets$condition[onsets$subject==sub]==2))),
                                                   amp = c(rep(amp.1_samp[sub,it],    sum(onsets$condition[onsets$subject==sub]==1)),
