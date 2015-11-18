@@ -1,5 +1,5 @@
 posterior_predictive_single = function(params_org,x,niter=100,onsets,debug=F){
-  if(class(params_org)=='stanfit') params=extract(params_org,pars=c('amp','latency','tau1','tau2','scr_sigma'))
+  if(class(params_org)=='stanfit') params=extract(params_org,pars=c('amp','latency','tau1','tau2'))
   params = data.frame(params)
   nOnsets = length(unlist(onsets))#nT
   nMCCSamples= dim(params$tau1)

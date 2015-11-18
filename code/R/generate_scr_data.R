@@ -16,8 +16,8 @@ generate_scr_data = function(nT=1000,
   }
   scr_trial = scr_model(x = 1:nT,
                         onsets = c(onsetsA,onsetsB),
-                        amp = rnorm(length(onsetsA)+length(onsetsB),c(rep(ampA,length(onsetsA)),rep(ampB,length(onsetsB))),0.4),
-                        latency = rnorm(length(onsetsA)+length(onsetsB),c(rep(latA,length(onsetsA)),rep(latB,length(onsetsB))),1),
+                        amp = rnorm(length(onsetsA)+length(onsetsB),c(rep(ampA,length(onsetsA)),rep(ampB,length(onsetsB))),0),
+                        latency = rnorm(length(onsetsA)+length(onsetsB),c(rep(latA,length(onsetsA)),rep(latB,length(onsetsB))),0),
                         tau1 = tau1,
                         tau2 = tau2)
   return(scr_trial+rnorm(nT,0,sigmaSCR))

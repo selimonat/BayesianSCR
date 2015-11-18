@@ -59,7 +59,8 @@ model_1 <- stan_model(file = 'scr_model1.stan')
 #model_1b <- stan_model(file = 'scr_model1b.stan')
 
 
-fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 200, chains = 1,refresh=1,init=init.f,pars=c('amp','latency','tau1','tau2','scr_sigma'),control=list(adapt_delta=0.5))
+#fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 200, chains = 1,refresh=1,init=init.f,pars=c('amp','latency','tau1','tau2','scr_sigma'),control=list(adapt_delta=0.5))
+fit <- sampling(model_2,data = data_stan, algorithm='NUTS',iter = 200, chains = 1,refresh=1,pars=c('amp','latency','tau1','tau2','scr_sigma'),control=list(adapt_delta=0.5))
 
 traceplot(fit,pars=c('amp','latency','tau1','tau2','scr_sigma'),inc_warmup=T)
 

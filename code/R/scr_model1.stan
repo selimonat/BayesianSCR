@@ -38,28 +38,20 @@ model {
    
     scr_hat      <- rep_vector(0,ntime);
     for(tr in 1:ntrial){
-  
-//         for (t in 1:ntime){
-//           xx[t]         <- x[t] - onset[tr]- latency[condition[tr]];
-//         }
+
         xx <- x - onset[tr]-latency[condition[tr]];
         posPositive <-head(sort_indices_asc(xx .* xx),1);
         c          <- amp[condition[tr]]/maxamp;
         
         for(t in posPositive[1]:min(posPositive[1]+40,ntime)){
-          // for(t in posPositive[1]:ntime){
-          
+
               scr_hat[t]   <- scr_hat[t] + c * (exp(-xx[t]/tau1) - exp(-xx[t]/(tau2)));
         
         }# time loop
     } # trial loop
   }#curly
-  
-  
 
-
-
-       scr ~ normal(scr_hat,scr_sigma);
+  scr ~ normal(scr_hat,scr_sigma);
 }
 
 generated quantities {
