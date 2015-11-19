@@ -8,14 +8,15 @@ set.seed(3)
 # Generate Fake Data
 cfg = list(plotData = T,
            nsub = 25,
-           nonsets = 2,
+           nonsets = 6,
            ntime = 200)
 data.onset = NULL
 data.sim = NULL
 
 for(sub in 1:cfg$nsub){
   # This data.frame defines when the onsets (randomly placed) and which conditions they are
-  allonsets = c(0.01,0.20,0.40,0.60)*cfg$ntime#sample.int(0.1*cfg$ntime,2*cfg$nonsets)*8
+  #allonsets = c(0.01,0.20,0.40,0.60)*cfg$ntime#sample.int(0.1*cfg$ntime,2*cfg$nonsets)*8
+  allonsets = sort(sample.int(0.1*cfg$ntime,2*cfg$nonsets)*8)
   
   data = data.frame(condition = c(rep(1,cfg$nonsets),rep(2,cfg$nonsets)),
                     onset = c(onsetsA = allonsets[1:cfg$nonsets],
@@ -55,16 +56,17 @@ options(mc.cores = parallel::detectCores())
 model_2 <- stan_model(file = 'scr_model2.stan')
 #model_2 <- stan_model(file = 'scr_model_2_beta_1.stan')
 init.f = function(chain_id){
+  cfg = list(nsub = 25)
   l = list(
     m_tau1 = 4,
     m_tau2 = 2,
-    m_latency = array(10,15),
-    m_amp = array(6,3),
-    m_scr_sigma = 0.06,
-    s_tau1 = .1,
-    s_tau2 = .1,
-    s_latency = array(1,1),
-    s_amp = array(.1,1),
+    m_latency = array(c(10,15)),
+    m_amp = array(c(6,3)),
+    m_scr_sigma = 0.05,
+    s_tau1 = 1,
+    s_tau2 = 1,
+    s_latency = array(c(1,1)),
+    s_amp = array(c(.1,1)),
     s_scr_sigma = 0.1,
     tau1 = rep(4,cfg$nsub),
     tau2 = rep(2,cfg$nsub),
@@ -78,8 +80,8 @@ init.f = function(chain_id){
   )
   return(l)
 }
-fit2 <- sampling(model_2,data = data_stan, algorithm='NUTS',iter = 200, chains = 1,refresh=1,control=list(adapt_delta=0.8),verbose=T)
-#fit2 <- sampling(model_2,data = data_stan, algorithm='NUTS',init=init.f,iter = 500, chains = 1,refresh=10,control=list(adapt_delta=0.8))
+fit2 <- sampling(model_2,data = data_stan,init=init.f, algorithm='NUTS',iter = 500, chains = 4,refresh=1,control=list(adapt_delta=0.8),verbose=T)
+
 
 #summary(do.call(rbind, args = get_sampler_params(fit2, inc_warmup = TRUE)),
 #        digits = 2)
