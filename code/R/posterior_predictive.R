@@ -51,6 +51,9 @@ posterior_predictive_group = function(params_org,x,niter=100,nsubjects=10,onsets
           val[val<=0]=rnorm(rep(1,sum(val<=0)),params[iterIdx[val<=0],nameList[n]], params[iterIdx[val<=0],nameList[n]])    
         }
       }
+      
+      
+      
       if(nameList[n] == 'm_tau2'){ # we need to make sure, that tau2 is smaller than tau1
         while(any(val>=tau1_samp[sub,])){
           val[val>=tau1_samp[sub,]]=rnorm(rep(1,sum(val>=tau1_samp[sub,])),params[iterIdx[val>=tau1_samp[sub,]],nameList[n]], params[iterIdx[val>=tau1_samp[sub,]],nameList[n]])    

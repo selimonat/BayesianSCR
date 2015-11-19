@@ -71,11 +71,11 @@ transformed parameters {
           for(t in posPositive[1]:min(posPositive[1]+40,ntime_per_subject[sub])){
           scr_hat[posTime+t-1]   <- scr_hat[posTime+t-1] + c * (exp(-xx[t]/tau1[sub]) - exp(-xx[t]/(tau2[sub])));
           
-              if(sub == nsubject && on ==nonset[sub] && t == min(posPositive[1]+40,ntime_per_subject[sub])){
-                print("")
-                # maxamp:",maxamp," amp:",amp[sub][condition[on]]," c:",c,
-                print("lat:",latency[sub][condition[on]]," cond:",condition[on]," tau1:",tau1[sub]," tau2:",tau2[sub]);
-              }
+//               if(sub == nsubject && on ==nonset[sub] && t == min(posPositive[1]+40,ntime_per_subject[sub])){
+//                 print("")
+//                 # maxamp:",maxamp," amp:",amp[sub][condition[on]]," c:",c,
+//                 print("lat:",latency[sub][condition[on]]," cond:",condition[on]," tau1:",tau1[sub]," tau2:",tau2[sub]);
+//               }
           } #end t-loop
            
       } #end onset/onset loop

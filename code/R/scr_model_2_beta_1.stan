@@ -92,13 +92,13 @@ model {
     for (sub in 1:nsubject){
        
         // Hierarchical relation definition
-//        for(c in 1:ncondition){
-//           amp[sub,c]            ~ normal(m_amp[c],s_amp[c]);
-//           latency[sub,c]        ~ normal(m_latency[c],s_latency[c]);
-//        }
-//        tau1[sub]               ~ normal(m_tau1,s_tau1);
-//        tau2[sub]               ~ normal(m_tau2,s_tau2);
-//        scr_sigma[sub]          ~ normal(m_scr_sigma,s_scr_sigma);
+       for(c in 1:ncondition){
+          amp[sub,c]            ~ normal(m_amp[c],s_amp[c]);
+          latency[sub,c]        ~ normal(m_latency[c],s_latency[c]);
+       }
+       tau1[sub]               ~ normal(m_tau1,s_tau1);
+       tau2[sub]               ~ normal(m_tau2,s_tau2);
+       scr_sigma[sub]          ~ normal(m_scr_sigma,s_scr_sigma);
       
        // Model Definition
        

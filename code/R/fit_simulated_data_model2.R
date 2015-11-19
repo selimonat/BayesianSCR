@@ -7,9 +7,9 @@ source('scr_model.R')
 set.seed(3)
 # Generate Fake Data
 cfg = list(plotData = T,
-           nsub = 2,
+           nsub = 25,
            nonsets = 2,
-           ntime = 100)
+           ntime = 200)
 data.onset = NULL
 data.sim = NULL
 
@@ -23,7 +23,7 @@ for(sub in 1:cfg$nsub){
   
   data.sim = rbind(data.sim,data.frame(
     
-    scr     = generate_scr_data(sigmaSCR=0.06,nT       = cfg$ntime, # Generate the data with the givven onsets, and number of samples
+    scr     = generate_scr_data(nT       = cfg$ntime, # Generate the data with the givven onsets, and number of samples
                                 onsetsA = data$onset[data$condition==1],
                                 onsetsB = data$onset[data$condition==2]),
     subject = sub,
@@ -40,7 +40,7 @@ if(cfg$plotData) ggplot(data.sim,aes(x=time,y=scr,color=factor(subject)))+geom_p
 
 data_stan <- list(
   nsubject = cfg$nsub,
-  ntrial=(as.numeric(daply(data.onset,.(subject),summarise,length(condition)))), # number of onsets * nconditions * subject, for the simulation only!
+  nonset=(as.numeric(daply(data.onset,.(subject),summarise,length(condition)))), # number of onsets * nconditions * subject, for the simulation only!
   ncondition = 2, # number of conditions
   ntime_per_subject =(as.numeric(daply(data.sim,.(subject),summarise,length(time)))),
   scr = data.sim$scr,
@@ -54,19 +54,27 @@ options(mc.cores = parallel::detectCores())
 
 model_2 <- stan_model(file = 'scr_model2.stan')
 #model_2 <- stan_model(file = 'scr_model_2_beta_1.stan')
-
 init.f = function(chain_id){
   l = list(
-    m_tau1 = 10,
-    m_tau2 = 3,
-    m_latency = c(10,10),
-    m_amp = c(1,1),
+    m_tau1 = 4,
+    m_tau2 = 2,
+    m_latency = array(10,15),
+    m_amp = array(6,3),
     m_scr_sigma = 0.06,
     s_tau1 = .1,
     s_tau2 = .1,
-    s_latency = c(1,1),
-    s_amp = c(.1,.1),
-    s_scr_sigma = 0.1
+    s_latency = array(1,1),
+    s_amp = array(.1,1),
+    s_scr_sigma = 0.1,
+    tau1 = rep(4,cfg$nsub),
+    tau2 = rep(2,cfg$nsub),
+    latency = t(matrix(rep(c(10,15),cfg$nsub),nrow=2)),
+    
+    amp = t(matrix(rep(c(6,3),cfg$nsub),nrow=2)),
+    
+    scr_sigma = rep(0.05,cfg$nsub)
+    
+    
   )
   return(l)
 }
@@ -77,7 +85,7 @@ fit2 <- sampling(model_2,data = data_stan, algorithm='NUTS',iter = 200, chains =
 #        digits = 2)
 source('posterior_predictive.R')
 traceplot(fit2,pars=c('m_amp','m_latency','m_tau1','m_tau2','s_amp','s_latency','s_tau1','s_tau2'),inc_warmup=T)
-#a = posterior_predictive_single(fit2,1:cfg$ntime,onsets=data.onset,niter = 15)
+a = posterior_predictive_group(fit2,1:cfg$ntime,onsets=data.onset,niter = 15)
 #ggplot(data.frame(a),aes(x=time,y=scr))+geom_point()+facet_grid(subject~iter)
 traceplot(fit2,pars=c('amp','latency','tau1','tau2'),inc_warmup=T)
 
