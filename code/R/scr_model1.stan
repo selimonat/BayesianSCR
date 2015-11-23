@@ -4,7 +4,7 @@ data {
   int ncondition; # number of conditions
   real scr[ntime];
   vector[ntime] x;
-  int<lower=1> onset[ntrial]; # 
+  real<lower=0,upper=ntime> onset[ntrial]; # 
   int<lower=1,upper=ncondition> condition[ntrial]; # which Condition [a/b]?
 }
 

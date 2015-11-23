@@ -13,12 +13,18 @@ posterior_predictive_single = function(params_org,x,niter=100,onsets,debug=F){
   
   for(i in 1:niter){
     it = iterIdx[i]
+    
+    if(is.null(params$latency.1)){
+      latency=rep(params$latency[it],sum(onsets$condition==1))
+      amp = rep(params$amp[it],    sum(onsets$condition==1))
+    }else{#2 parameters
+      latency=c(rep(params$latency.1[it],sum(onsets$condition==1)),
+                rep(params$latency.2[it],sum(onsets$condition==2)))
+      amp = c(rep(params$amp.1[it],    sum(onsets$condition==1)),
+              rep(params$amp.2[it],    sum(onsets$condition==2)))
+    }
     dat.all = rbind(dat.all,cbind(iter=it,time=x,
-                                  scr = scr_model(x,onsets = onsets$onset,latency=c(rep(params$latency.1[it],sum(onsets$condition==1)),
-                                                                                    rep(params$latency.2[it],sum(onsets$condition==2))),
-                                                  
-                                                  amp = c(rep(params$amp.1[it],    sum(onsets$condition==1)),
-                                                          rep(params$amp.2[it],    sum(onsets$condition==2))),
+                                  scr = scr_model(x,onsets = onsets$onset,latency=latency,amp=amp,
                                                   tau1=params$tau1[it],
                                                   tau2=params$tau2[it])
     ))

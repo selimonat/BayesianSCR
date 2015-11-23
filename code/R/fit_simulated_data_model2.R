@@ -80,7 +80,7 @@ init.f = function(chain_id){
   )
   return(l)
 }
-fit2 <- sampling(model_2,data = data_stan,init=init.f, algorithm='NUTS',iter = 500, chains = 4,refresh=1,control=list(adapt_delta=0.8),verbose=T)
+fit2 <- sampling(model_2,data = data_stan,init=init.f, algorithm='NUTS',iter = 500, chains = 4,refresh=10,control=list(adapt_delta=0.9),verbose=T)
 
 
 #summary(do.call(rbind, args = get_sampler_params(fit2, inc_warmup = TRUE)),
