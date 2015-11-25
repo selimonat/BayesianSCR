@@ -8,7 +8,7 @@ if (1==0){
   
   t = '1:5'
   #t = '1'
-  cmd=paste0('qsub -cwd -t ',t, ' -o ', cfg$gridOutputPath, '/ -e ', cfg$gridOutputPath, '/ -l ', cfg$requirements, ' -N ', cfg$job_name, ' -pe default ', 1, ' -q nbp.q fit_data.R')
+  cmd=paste0('qsub -cwd -t ',t, ' -o ', cfg$gridOutputPath, '/ -e ', cfg$gridOutputPath, '/ -l ', cfg$requirements, ' -N ', cfg$job_name, ' -pe default ', 1, ' -q nbp.q fit_data_model1_hierarchicalonset.R')
   system(cmd)
 }
 
@@ -21,7 +21,10 @@ source('scr_model.R')
 source('scr_load_data.R')
 # Generate Fake Data
 #set.seed(1)
-out = scr_load_data(plot=F,resample_to_fs = 10)
+cfg = list(resample_to_fs = 10,
+           plot=F)
+out = scr_load_data(plot=cfg$plot,resample_to_fs = cfg$resample_to_fs)
+
 data.scr = out$data.scr
 data.scr.resamp = out$data.scr.resamp
 
@@ -49,35 +52,23 @@ init.f = function(chain_id){
     tau2 = 2,
     latency = array(c(3)),
     amp = array(c(1.5)),
+    amp_sigma = array(c(1)),
+    amp_per_onset = matrix(rep(1.5,data_stan$ntrial),nrow=1),
     scr_sigma = 0.6
   )
   return(l)
 }
 
-model_1 <- stan_model(file = 'scr_model1.stan')
+model_1 <- stan_model(file = 'scr_model_1_hierarchicalonset.stan')
 # Filepath for the grid engine
-name = '2015-11-24_2_scr_model1'
+name = '2015-11-25_scr_model1_hierarchicalonset'
 name = paste0(name, 'grid_',paste0(sample(c(0:9, letters, LETTERS),10,replace=TRUE),collapse=''))
 name = paste0(name,'.RData')
 dir = './stanfit/'
 dir.create(file.path(dir), showWarnings = F)
-  
 
-fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 3000, init = init.f,chains = 1,refresh=10,pars=c('amp','latency','tau1','tau2','scr_sigma'))
+
+fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 3000, init = init.f,chains = 1,refresh=10,pars=c('amp','latency','tau1','tau2','scr_sigma','amp_per_onset'))
 
 #grid engine saving
 save(fit,file= file.path(dir,name))
-
-# Plotting
-traceplot(fit,pars=c('amp','latency','tau1','tau2','scr_sigma'),inc_warmup=T)
-# 
-# # Evaluate Fit
-# source('posterior_predictive.R')
-# a = data.frame(posterior_predictive_single(fit,1:data_stan$ntime,onsets=data.frame(onset=data_stan$onset,condition=1)))
-# b = rbind.fill(cbind(a,type='post'),cbind(data.scrSL.resamp,type='raw'))
-# b = cbind(b,alpha <- ifelse(b$type=='post', 0.1, 1))
-# 
-# ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
-# ggplot(b,aes(x=time,y=scr,colour=type,group=iter))+geom_line(aes(alpha=alpha))
-# 
-# #ggplot(data.frame(a),aes(x=time,y=scr,group=iter))+geom_point()+facet_wrap(~iter,ncol = 10)

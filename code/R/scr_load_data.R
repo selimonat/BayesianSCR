@@ -1,4 +1,4 @@
-scr_load_data <- function(plotData=F,filename='~/Documents/scr_2/calibrationdata_56subjects.txt'){
+scr_load_data <- function(plotData=F,resample_to_fs=10,filename='~/Documents/scr_2/calibrationdata_56subjects.txt'){
   library(plyr)
   library(ggplot2)
 cfg = list(plotData = plotData)
@@ -27,7 +27,7 @@ same_sampling_rate=function(data,fs_target=NULL){
     return(y)
   })
 }
-data.scr.resamp = same_sampling_rate(data.scr,fs_target=1)
+data.scr.resamp = same_sampling_rate(data.scr,fs_target=resample_to_fs)
 
 
 if(cfg$plotData){

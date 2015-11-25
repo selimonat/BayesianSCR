@@ -1,0 +1,120 @@
+---
+title: "Skin Conductance Response Deconvolution using Hierarchical Bayesian Posterior Estimation"
+author: "Benedikt Ehinger & Selim Onat"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, autodep=T,message=FALSE,cache=T,fig.width=12, fig.height=4) #usually fig height 8
+```
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 120)
+```
+
+```{r loadData}
+library(ggplot2)
+library(rstan)
+library(plyr)
+source('generate_scr_data.R')
+source('scr_model.R')
+source('scr_load_data.R')
+# Generate Fake Data
+#set.seed(1)
+cfg = list(resample_to_fs = 10,
+           plot=T)
+out = scr_load_data(plot=cfg$plot,resample_to_fs = cfg$resample_to_fs)
+```
+This is all the data of the baseline condition we want to model. I remove all data 20s after the last stimulus onset, we don't want to model it.
+
+```{r select one and downsample}
+data.scr = out$data.scr
+data.scr.resamp = out$data.scr.resamp
+
+selectSub = 19
+data.scrSL = subset(data.scr,data.scr$subject==selectSub)
+data.scrSL.resamp = subset(data.scr.resamp,data.scr.resamp$subject==selectSub)
+
+data_stan <- list(
+  ntime=length(data.scrSL.resamp$time), # number of timepoints
+  ntrial=sum(data.scrSL$onset), # number of onsets * nconditions
+  ncondition = 1, # number of conditions
+  scr = data.scrSL.resamp$scr,
+  x = 0:(length(data.scrSL.resamp$scr)-1),
+  onset = which(data.scrSL$onset==1)/(50/cfg$resample_to_fs), # 
+  condition = rep(1,sum(data.scrSL$onset)) # which Condition [a/b]?
+)
+
+if (cfg$plot) ggplot()+geom_line(aes(x=data_stan$x,y=data_stan$scr))+geom_vline(aes(xintercept=data_stan$onset))
+```
+We take one subect, in this case subject: `r show(selectSub)`, we downsample the data to 1Hz
+
+```{r prepare stan}
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+init.f = function(chain_id){
+  l = list(
+    tau1 = 5,
+    tau2 = 2,
+    latency = array(c(3)),
+    amp = array(c(1.5)),
+    amp_sigma = array(c(1)),
+    amp_per_onset = matrix(rep(1.5,data_stan$ntrial),nrow=1),
+    scr_sigma = 0.6
+  )
+  return(l)
+}
+
+model_1 <- stan_model(file = 'scr_model_1_hierarchicalonset.stan')
+# Filepath for the grid engine
+name = '2015-11-23_scr_model1'
+name = paste0(name, 'grid_',paste0(sample(c(0:9, letters, LETTERS),10,replace=TRUE),collapse=''))
+name = paste0(name,'.RData')
+dir = './stanfit/'
+dir.create(file.path(dir), showWarnings = F)
+
+```
+
+```{r fit stan}
+#fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 1000, init = init.f,chains = 1,refresh=10,pars=c('amp_per_onset','amp_sigma','amp','latency','tau1','tau2','scr_sigma'),control=list(adapt_delta=0.5))
+source('scr_stan_grid_collect.R')
+fit = scr_stan_grid_collect(name='2015-11-24_scr_model1_hierarchicalonset')
+#grid engine saving
+#save(fit,file= file.path(dir,name))
+```
+
+```{r plot some mcmc plots}
+# Plotting
+
+traceplot(fit,pars=c('amp','latency','tau1','tau2','scr_sigma'),inc_warmup=F)
+S = ggmcmc::ggs(fit)
+ggmcmc::ggs_autocorrelation(S)
+ggmcmc::ggs_caterpillar(S)
+
+```
+There is huge autocorrelation, the model most likely did not converge perfectly. But for now I'm happy with it.
+
+```{r posterior predictive}
+# Evaluate Fit
+a = NULL
+for (idx in sample.int(100,100)){
+  amplist = NULL
+  for( o in 1:data_stan$ntrial){
+    amplist = c(amplist,S$value[S$Iteration == idx& S$Parameter == paste0('amp_per_onset.1.',o,'.')])
+  }
+  scr = scr_model(x=data_stan$x,onsets = data_stan$onset,latency = rep(S$value[S$Iteration == idx & S$Parameter=='latency.1.'],data_stan$ntrial),
+                  amp = amplist,
+                  tau1 = S$value[S$Iteration == idx & S$Parameter=='tau1'],
+                  tau2 = S$value[S$Iteration == idx & S$Parameter=='tau2'])
+  a = rbind(a,data.frame(iter = idx,type='post',time=data_stan$x,scr=scr))
+}
+
+source('posterior_predictive.R')
+a = data.frame(posterior_predictive_single(fit,1:data_stan$ntime,onsets=data.frame(onset=data_stan$onset,condition=1)))
+a$time = a$time/(cfg$resample_to_fs)
+b = rbind.fill(cbind(a,type='post'),cbind(data.scrSL.resamp,type='raw'))
+b = cbind(b,alpha <- ifelse(b$type=='post', 0.1, 1))
+
+ggplot(b,aes(x=time,y=scr,colour=type,group=iter))+geom_line(aes(alpha=alpha))
+ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
+
+```
