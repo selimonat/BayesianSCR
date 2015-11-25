@@ -64,20 +64,15 @@ init.f = function(chain_id){
   return(l)
 }
 
-model_1 <- stan_model(file = 'scr_model_1_hierarchicalonset.stan')
-# Filepath for the grid engine
-name = '2015-11-23_scr_model1'
-name = paste0(name, 'grid_',paste0(sample(c(0:9, letters, LETTERS),10,replace=TRUE),collapse=''))
-name = paste0(name,'.RData')
-dir = './stanfit/'
-dir.create(file.path(dir), showWarnings = F)
+#model_1 <- stan_model(file = 'scr_model_1_hierarchicalonset.stan')
+
 
 ```
 
 ```{r fit stan}
 #fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 1000, init = init.f,chains = 1,refresh=10,pars=c('amp_per_onset','amp_sigma','amp','latency','tau1','tau2','scr_sigma'),control=list(adapt_delta=0.5))
 source('scr_stan_grid_collect.R')
-fit = scr_stan_grid_collect(name='2015-11-24_scr_model1_hierarchicalonset')
+fit = scr_stan_grid_collect(name='2015-11-25_scr_model1_hierarchicalonset')
 #grid engine saving
 #save(fit,file= file.path(dir,name))
 ```
@@ -96,25 +91,26 @@ There is huge autocorrelation, the model most likely did not converge perfectly.
 ```{r posterior predictive}
 # Evaluate Fit
 a = NULL
-for (idx in sample.int(100,100)){
+S$IterationUnique = as.numeric(interaction(S$Iteration,S$Chain))
+for (idx in sample.int(max(S$IterationUnique),100)){
   amplist = NULL
   for( o in 1:data_stan$ntrial){
-    amplist = c(amplist,S$value[S$Iteration == idx& S$Parameter == paste0('amp_per_onset.1.',o,'.')])
+    amplist = c(amplist,S$value[S$IterationUnique == idx& S$Parameter == paste0('amp_per_onset.1.',o,'.')])
   }
-  scr = scr_model(x=data_stan$x,onsets = data_stan$onset,latency = rep(S$value[S$Iteration == idx & S$Parameter=='latency.1.'],data_stan$ntrial),
+  scr = scr_model(x=data_stan$x,onsets = data_stan$onset,latency = rep(S$value[S$IterationUnique == idx & S$Parameter=='latency.1.'],data_stan$ntrial),
                   amp = amplist,
-                  tau1 = S$value[S$Iteration == idx & S$Parameter=='tau1'],
-                  tau2 = S$value[S$Iteration == idx & S$Parameter=='tau2'])
+                  tau1 = S$value[S$IterationUnique == idx & S$Parameter=='tau1'],
+                  tau2 = S$value[S$IterationUnique == idx & S$Parameter=='tau2'])
   a = rbind(a,data.frame(iter = idx,type='post',time=data_stan$x,scr=scr))
 }
 
 source('posterior_predictive.R')
-a = data.frame(posterior_predictive_single(fit,1:data_stan$ntime,onsets=data.frame(onset=data_stan$onset,condition=1)))
+#a = data.frame(posterior_predictive_single(fit,1:data_stan$ntime,onsets=data.frame(onset=data_stan$onset,condition=1)))
 a$time = a$time/(cfg$resample_to_fs)
 b = rbind.fill(cbind(a,type='post'),cbind(data.scrSL.resamp,type='raw'))
 b = cbind(b,alpha <- ifelse(b$type=='post', 0.1, 1))
 
 ggplot(b,aes(x=time,y=scr,colour=type,group=iter))+geom_line(aes(alpha=alpha))
-ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
+#ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
 
 ```
