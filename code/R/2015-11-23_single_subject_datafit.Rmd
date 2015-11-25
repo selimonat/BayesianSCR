@@ -12,6 +12,7 @@ options(width = 120)
 ```
 
 ```{r loadData}
+
 library(ggplot2)
 library(rstan)
 library(plyr)
@@ -20,11 +21,14 @@ source('scr_model.R')
 source('scr_load_data.R')
 # Generate Fake Data
 #set.seed(1)
-out = scr_load_data(plot=T)
+cfg = list(resample_to_fs = 10,
+           plot=T)
+out = scr_load_data(plot=cfg$plot,resample_to_fs = cfg$resample_to_fs)
 ```
 This is all the data of the baseline condition we want to model. I remove all data 20s after the last stimulus onset, we don't want to model it.
 
 ```{r select one and downsample}
+
 data.scr = out$data.scr
 data.scr.resamp = out$data.scr.resamp
 
@@ -38,15 +42,16 @@ data_stan <- list(
   ncondition = 1, # number of conditions
   scr = data.scrSL.resamp$scr,
   x = 1:length(data.scrSL.resamp$scr),
-  onset = which(data.scrSL$onset==1)/50, # 
+  onset = which(data.scrSL$onset==1)/(50/cfg$resample_to_fs), # 
   condition = rep(1,sum(data.scrSL$onset)) # which Condition [a/b]?
 )
 
 ggplot()+geom_line(aes(x=data_stan$x,y=data_stan$scr))+geom_vline(aes(xintercept=data_stan$onset))
 ```
-We take one subect, in this case subject: `r show(selectSub)`, we downsample the data to 1Hz
+We take one subect, in this case subject: `r show(selectSub)`, we downsample the data to `r show(cfg$resample_to_fs)` Hz
 
 ```{r prepare stan}
+
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 init.f = function(chain_id){
@@ -59,25 +64,17 @@ init.f = function(chain_id){
   )
   return(l)
 }
-
-model_1 <- stan_model(file = 'scr_model1.stan')
-# Filepath for the grid engine
-name = '2015-11-23_scr_model1'
-name = paste0(name, 'grid_',paste0(sample(c(0:9, letters, LETTERS),10,replace=TRUE),collapse=''))
-name = paste0(name,'.RData')
-dir = './stanfit/'
-dir.create(file.path(dir), showWarnings = F)
-
+#model_1 <- stan_model(file = 'scr_model1.stan')
 ```
 
 ```{r fit stan}
-fit <- sampling(model_1,data = data_stan, algorithm='NUTS',iter = 1000, init = init.f,chains = 1,refresh=100,pars=c('amp','latency','tau1','tau2','scr_sigma'),control=list(adapt_delta=0.5))
-
-#grid engine saving
-#save(fit,file= file.path(dir,name))
+# 
+source('scr_stan_grid_collect.R')
+fit = scr_stan_grid_collect(name='2015-11-24_2_scr_model1')
 ```
 
 ```{r plot some mcmc plots}
+
 # Plotting
 
 traceplot(fit,pars=c('amp','latency','tau1','tau2','scr_sigma'),inc_warmup=T)
@@ -89,12 +86,16 @@ ggmcmc::ggs_caterpillar(S)
 There is huge autocorrelation, the model most likely did not converge perfectly. But for now I'm happy with it.
 
 ```{r posterior predictive}
+
 # Evaluate Fit
 source('posterior_predictive.R')
 a = data.frame(posterior_predictive_single(fit,1:data_stan$ntime,onsets=data.frame(onset=data_stan$onset,condition=1)))
+# because we misspecified the x from 1:ntime instead of 0: ntime-1 we need to move the data time
+datatmp = data.scrSL.resamp
+a$time = a$time/(cfg$resample_to_fs)
 b = rbind.fill(cbind(a,type='post'),cbind(data.scrSL.resamp,type='raw'))
 b = cbind(b,alpha <- ifelse(b$type=='post', 0.1, 1))
 
-ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
+#ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
 ggplot(b,aes(x=time,y=scr,colour=type,group=iter))+geom_line(aes(alpha=alpha))
 ```
