@@ -42,5 +42,5 @@ scr_get_ML_scr <- function(data_stan,init.f,cfg){
   
   
   
-  return(list(scr=reshape2::melt(df,measure.vars=c('scr','scrML')),onset=do))
+  return(list(scr=reshape2::melt(df,measure.vars=c('scr','scrML'),variable.name='type',value.name='scr'),onset=do))
 }

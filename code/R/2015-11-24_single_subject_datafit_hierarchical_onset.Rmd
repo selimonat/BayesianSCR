@@ -7,6 +7,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=FALSE, warning=FALSE, autodep=T,message=FALSE,cache=T,fig.width=12, fig.height=4) #usually fig height 8
 ```
+
 ```{r set-options, echo=FALSE, cache=FALSE}
 options(width = 120)
 ```
@@ -23,7 +24,7 @@ source('generate_scr_data.R')
 #set.seed(1)
 cfg = list(resample_to_fs = 10,
            orgsamplingrate = 10, 
-           #subject=31,
+           subject=31,
            plot=T)
 ```
 This is all the data of the baseline condition we want to model. I remove all data 20s after the last stimulus onset, we don't want to model it.
@@ -40,7 +41,7 @@ model_1 <- stan_model(file = 'scr_model_1_hierarchicalonset.stan')
 fit <- sampling(model_1,
                 data = data$data_stan, 
                 algorithm='NUTS',
-                iter = 300,
+                iter = 1000,
                 init = list(data$init.f),
                 chains = 1,
                 refresh=10,
@@ -71,26 +72,32 @@ a = NULL
 S$IterationUnique = as.numeric(interaction(S$Iteration,S$Chain))
 for (idx in sample.int(max(S$IterationUnique),100)){
   amplist = NULL
-  for( o in 1:data_stan$ntrial){
+  for( o in 1:data$data_stan$ntrial){
     amplist = c(amplist,S$value[S$IterationUnique == idx& S$Parameter == paste0('amp_per_onset.1.',o,'.')])
   }
-  scr = scr_model(x=data_stan$x,onsets = data_stan$onset,latency = rep(S$value[S$IterationUnique == idx & S$Parameter=='latency.1.'],data_stan$ntrial),
+  scr = scr_model(x=data$data_stan$x,
+                  onsets = data$data_stan$onset,
+                  latency = rep(S$value[S$IterationUnique == idx & S$Parameter=='latency.1.'],data$data_stan$ntrial),
                   amp = amplist,
                   tau1 = S$value[S$IterationUnique == idx & S$Parameter=='tau1'],
                   tau2 = S$value[S$IterationUnique == idx & S$Parameter=='tau2'])
-  a = rbind(a,data.frame(iter = idx,type='post',time=data_stan$x,scr=scr))
+  a = rbind(a,data.frame(iter = idx,type='post',time=data$data_stan$x,scr=scr))
 }
 
 source('posterior_predictive.R')
 #a = data.frame(posterior_predictive_single(fit,1:data_stan$ntime,onsets=data.frame(onset=data_stan$onset,condition=1)))
 a$time = a$time/(cfg$resample_to_fs)
 
-data.scrSL.resamp = subset(data.scr.resamp,data.scr.resamp$subject==cfg$subject)
-b = rbind.fill(cbind(a,type='post'),cbind(data.scrSL.resamp,type='raw'))
-b = cbind(b,alpha <- ifelse(b$type=='post', 0.1, 1))
+#data.scrSL.resamp = subset(data$data.scr.resamp,data$data.scr.resamp$subject==cfg$subject)
 
-ggplot(b,aes(x=time,y=scr,colour=type,group=iter))+geom_line(aes(alpha=alpha))
-#+geom_vline(data=NULL,aes(alpha=NULL,x=NULL,y=NULL,colour=NULL,group=NULL,xintercept=data_stan$onset))
-#ggplot(b,aes(x=time,y=scr,colour=type))+stat_summary(fun.ymin="min",fun.ymax="max",fun.y=median,geom='errorbar')+geom_line()
+x = scr_get_ML_scr(data$data_stan,data$init.f,cfg)
+b = cbind(rbind.fill(cbind(a,subject=cfg$subject),cbind(x$scr,iter=-1)),
+          alpha=alpha <- ifelse(b$type=='post', 0.1, 1),
+          bold=bold   <- ifelse(b$type=='scr', 1, 1))
+
+ggplot()+geom_line(data=b,aes(x=time,y=scr,colour=factor(type),group=interaction(iter,type,alpha=alpha)),size=1)+
+  geom_segment(data=x$onset,aes(y=-Inf,yend=0,x=onset,xend=onset))
+ggsave(filename=paste0('../../graphs/fits/',format(Sys.time(), '%Y-%m-%d'),'_singleSub_',cfg$subject,'.pdf'))
+
 
 ```

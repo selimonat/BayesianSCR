@@ -19,8 +19,8 @@ library(plyr)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 source('generate_scr_data.R')
-source('scr_model.R')
-source('scr_load_data.R')
+
+
 # Generate Fake Data
 #set.seed(1)
 cfg = list(resample_to_fs =2,
@@ -47,7 +47,7 @@ fit <- sampling(model_2,
                 data = data$data_stan, 
                 algorithm='NUTS',
                 iter = 1000,
-                init = list(data$init.f()),
+                init = list(data$init.f),
                 chains = 1,
                 refresh=10,
                 pars=parstosave,
@@ -73,6 +73,19 @@ S = ggmcmc::ggs(fit)
 ggmcmc::ggs_autocorrelation(S)
 ggmcmc::ggs_caterpillar(S)
 
+
+
+
+if(1 == 0){
+  # Plots just for diagnostics 
+  traceplot(fit,pars=c('m_amp','m_latency','m_tau1','m_tau2','m_scr_sigma'),inc_warmup=T)
+  traceplot(fit,pars=c('s_amp','s_latency','s_tau1','s_tau2','s_scr_sigma'),inc_warmup=T)
+  
+  sub = 2
+  traceplot(fit,pars=laply(c('amp[%d,1]','latency[%d,1]','tau1[%d]','tau2[%d]','scr_sigma[%d]'),.fun=function(x)sprintf(x,sub)),inc_warmup=T)
+  
+  traceplot(fit,pars=laply('amp_per_onset[1,2]',.fun=function(x)sprintf(x,sub)),inc_warmup=T)
+}
 ```
 There is huge autocorrelation, the model most likely did not converge perfectly. But for now I'm happy with it.
 

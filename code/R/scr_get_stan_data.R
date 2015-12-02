@@ -35,7 +35,7 @@ scr_get_stan_data<- function(cfg){
 
     x = scr_get_ML_scr(data_stan,init.f,cfg)
     
-    p = ggplot(x$scr,aes(x=time,y=value,colour=variable))+geom_line()+facet_wrap(~subject,scales ='free',ncol = 4)+
+    p = ggplot(x$scr,aes(x=time,y=scr,colour=type))+geom_line()+facet_wrap(~subject,scales ='free',ncol = 4)+
       geom_vline(data=x$onset,aes(x=NULL,y=NULL,xintercept=onset))
     show(p)
     
