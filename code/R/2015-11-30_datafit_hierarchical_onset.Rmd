@@ -21,10 +21,11 @@ options(mc.cores = parallel::detectCores())
 source('generate_scr_data.R')
 
 
-# Generate Fake Data
-#set.seed(1)
+
 cfg = list(resample_to_fs =2,
            orgsamplingrate=10,
+           adapt_delta=0.8,
+           model='scr_model_2_hierarchicalonset_noLatency.stan',
            plot=T)
 ```
 This is all the data of the baseline condition we want to model. I remove all data 20s after the last stimulus onset, we don't want to model it.
@@ -33,28 +34,10 @@ This is all the data of the baseline condition we want to model. I remove all da
 source('scr_get_stan_data.R')
 data = scr_get_stan_data(cfg)
 ```
-We take one subect, in this case subject: `r show(selectSub)`, we downsample the data to 1Hz
-
-```{r prepare stan,fig.height=12}
-model_2 <- stan_model(file = 'scr_model_2_hierarchicalonset.stan')
-
-```
 
 ```{r fit stan}
-parstosave = c('m_latency','s_latency','latency','m_amp','s_amp','m_amp_sigma','s_amp_sigma','amp','amp_sigma','amp_per_onset','m_tau1','s_tau1','tau1','m_tau2','s_tau2','tau2','m_scr_sigma','s_scr_sigma','scr_sigma')
-
-fit <- sampling(model_2,
-                data = data$data_stan, 
-                algorithm='NUTS',
-                iter = 1000,
-                init = list(data$init.f),
-                chains = 1,
-                refresh=10,
-                pars=parstosave,
-                control=list(adapt_delta=0.5))
-
 source('scr_stan_grid_collect.R')
-#fit = scr_stan_grid_collect(name='2015-11-27_scr_model_2_hierarchicalonset_adaptdelta0.98')
+fit = scr_stan_grid_collect(cfg,date='2015-12-02')
 #grid engine saving
 #save(fit,file= file.path(dir,name))
 ```

@@ -9,9 +9,9 @@ scr_get_stan_data<- function(cfg){
   out = scr_load_data(plot=cfg$plot,resample_to_fs = cfg$resample_to_fs)
   data.scr = out$data.scr
   data.scr.resamp = out$data.scr.resamp
-  
   # generate the appropriate data_stan structure
   data_stan = scr_stan_data(data.scr,data.scr.resamp,subselect = cfg$subject,cfg = cfg)
+  
   
   # plot one subject if neccesary
   if (cfg$plot){

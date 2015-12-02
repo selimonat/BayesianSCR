@@ -20,11 +20,13 @@ rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 source('generate_scr_data.R')
 
-# Generate Fake Data
-#set.seed(1)
-cfg = list(resample_to_fs = 10,
-           orgsamplingrate = 10, 
-           subject=31,
+
+
+cfg = list(resample_to_fs = 2,
+           orgsamplingrate = 10,
+           adapt_delta=0.8,
+           subject=42,
+           model='scr_model_1_hierarchicalonset.stan',
            plot=T)
 ```
 This is all the data of the baseline condition we want to model. I remove all data 20s after the last stimulus onset, we don't want to model it.
@@ -36,21 +38,8 @@ data = scr_get_stan_data(cfg)
 ```
 
 ```{r fit stan}
-model_1 <- stan_model(file = 'scr_model_1_hierarchicalonset.stan')
-
-fit <- sampling(model_1,
-                data = data$data_stan, 
-                algorithm='NUTS',
-                iter = 1000,
-                init = list(data$init.f),
-                chains = 1,
-                refresh=10,
-                pars=c('amp_per_onset','amp_sigma','amp','latency','tau1','tau2','scr_sigma'),
-                control=list(adapt_delta=0.5))
-
-
 source('scr_stan_grid_collect.R')
-#fit = scr_stan_grid_collect(name='2015-11-25_scr_model1_hierarchicalonset')
+fit = scr_stan_grid_collect(cfg,date='2015-12-02')
 
 
 ```
@@ -64,7 +53,6 @@ ggmcmc::ggs_autocorrelation(S)
 ggmcmc::ggs_caterpillar(S)
 
 ```
-There is huge autocorrelation, the model most likely did not converge perfectly. But for now I'm happy with it.
 
 ```{r posterior predictive}
 # Evaluate Fit
@@ -91,13 +79,13 @@ a$time = a$time/(cfg$resample_to_fs)
 #data.scrSL.resamp = subset(data$data.scr.resamp,data$data.scr.resamp$subject==cfg$subject)
 
 x = scr_get_ML_scr(data$data_stan,data$init.f,cfg)
-b = cbind(rbind.fill(cbind(a,subject=cfg$subject),cbind(x$scr,iter=-1)),
-          alpha=alpha <- ifelse(b$type=='post', 0.1, 1),
+b = rbind.fill(cbind(a,subject=cfg$subject),cbind(x$scr,iter=-1))
+b = cbind(b,alpha=alpha <- ifelse(b$type=='post', 0.1, 1),
           bold=bold   <- ifelse(b$type=='scr', 1, 1))
 
-ggplot()+geom_line(data=b,aes(x=time,y=scr,colour=factor(type),group=interaction(iter,type,alpha=alpha)),size=1)+
+ggplot()+geom_line(data=b,aes(x=time,y=scr,colour=factor(type),group=interaction(iter,type),alpha=alpha),size=1)+
   geom_segment(data=x$onset,aes(y=-Inf,yend=0,x=onset,xend=onset))
-ggsave(filename=paste0('../../graphs/fits/',format(Sys.time(), '%Y-%m-%d'),'_singleSub_',cfg$subject,'.pdf'))
+#ggsave(filename=paste0('../../graphs/fits/',format(Sys.time(), '%Y-%m-%d'),'_singleSub_',cfg$subject,'.pdf'))
 
 
 ```

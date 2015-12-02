@@ -21,7 +21,7 @@ scr_stan_data<-function(data.scr,data.scr.resamp,subselect = NULL,cfg){
       ncondition = 1, # number of conditions
       ntime_per_subject =(as.numeric(daply(data.scr.resamp,.(subject),summarise,length(time)))),
       scr = data.scr.resamp$scr,
-      x_per_subject =unlist(dlply(data.scr.resamp,.(subject),function(x){1:length(x$time)})),
+      x_per_subject =unlist(dlply(data.scr.resamp,.(subject),function(x){0:(length(x$time)-1)})),
       onset = unlist(dlply(data.scr,.(subject),function(x){which(x$onset==1)}))/(cfg$orgsamplingrate/cfg$resample_to_fs), #50 because we downsampled from 50 to 1
       condition = unlist(dlply(data.scr,.(subject),function(x){rep(1,sum(x$onset))}))
     )

@@ -1,5 +1,5 @@
-scr_stan_fit_filename<-function(cfg){
-  date = format(Sys.time(), '%Y-%m-%d')
+scr_stan_fit_filename<-function(cfg,date=NULL){
+  if(is.null(date)) date = format(Sys.time(), '%Y-%m-%d')
   
   subject = ifelse(!is.null(cfg$subject),paste0('sub',cfg$subject),'')
   

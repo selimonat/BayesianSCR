@@ -17,16 +17,18 @@ scr_get_ML_scr <- function(data_stan,init.f,cfg){
       if((s%%5)==0)print(s)
       #browser()
       if (s==1){
-        xstart=1
-        onsetstart=1
+        xstart=0
+        onsetstart=0
       }else{  
         xstart = sum(data_stan$ntime_per_subject[1:(s-1)]) 
         onsetstart = sum(data_stan$nonset[1:(s-1)])
       }
       
-      timeidx = xstart:(xstart+data_stan$ntime_per_subject[s]-1)
-      onsetidx = onsetstart:(onsetstart+data_stan$nonset[s]-1)
-      scr = scr_model(x=data_stan$x[timeidx],
+      timeidx = (xstart+1):(xstart+data_stan$ntime_per_subject[s])
+      onsetidx = (onsetstart+1):(onsetstart+data_stan$nonset[s])
+      if(length(onsetidx)!= data_stan$nonset[s] ||length(timeidx)!= data_stan$ntime_per_subject[s]) browser()
+     # browser()
+      scr = scr_model(x=data_stan$x_per_subject[timeidx],
                       onsets = data_stan$onset[onsetidx],
                       latency = rep(val$latency[s],data_stan$nonset[s]),
                       amp = val$amp_per_onset[onsetidx],
