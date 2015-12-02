@@ -12,49 +12,20 @@ data.scr.resamp = out$data.scr.resamp
 # Fit STAN Model
 
 
+source('scr_stan_data.R')
+data_stan = scr_stan_data(data.scr,data.scr.resamp,subselect = 19,cfg = cfg)
 
-data_stan <- list(
-  nsubject = length(unique(data.scr.resamp$subject)),
-  nonset=(as.numeric(daply(data.scr,.(subject),summarise,sum(onset)))), # number of onsets * nconditions * subject, for the simulation only!
-  ncondition = 1, # number of conditions
-  ntime_per_subject =(as.numeric(daply(data.scr.resamp,.(subject),summarise,length(time)))),
-  scr = data.scr.resamp$scr,
-  x_per_subject =unlist(dlply(data.scr.resamp,.(subject),function(x){1:length(x$time)})),
-  onset = unlist(dlply(data.scr,.(subject),function(x){which(x$onset==1)}))/50, #50 because we downsampled from 50 to 1
-  condition = unlist(dlply(data.scr,.(subject),function(x){rep(1,sum(x$onset))}))
-)
 
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
 model_2 <- stan_model(file = 'scr_model2.stan')
 #model_2 <- stan_model(file = 'scr_model_2_beta_1.stan')
-init.f = function(chain_id){
-  cfg = list(nsub = 25)
-  l = list(
-    m_tau1 = 4,
-    m_tau2 = 2,
-    m_latency = array(c(10,15)),
-    m_amp = array(c(6,3)),
-    m_scr_sigma = 0.05,
-    s_tau1 = 1,
-    s_tau2 = 1,
-    s_latency = array(c(1,1)),
-    s_amp = array(c(.1,1)),
-    s_scr_sigma = 0.1,
-    tau1 = rep(4,cfg$nsub),
-    tau2 = rep(2,cfg$nsub),
-    latency = t(matrix(rep(c(10,15),cfg$nsub),nrow=2)),
-    
-    amp = t(matrix(rep(c(6,3),cfg$nsub),nrow=2)),
-    
-    scr_sigma = rep(0.05,cfg$nsub)
-    
-    
-  )
-  return(l)
-}
-fit.data <- sampling(model_2,data = data_stan, algorithm='NUTS',iter = 200, chains = 1,refresh=1,control=list(adapt_delta=0.9),verbose=T)
+source('scr_stan_init.R')
+init.f = scr_stan_init() # 
+stop('not sure if this will work because the init has initvalues also for onset of amplitude, be careful')
+
+fit.data <- sampling(model_2,data = data_stan,init= init.f, algorithm='NUTS',iter = 200, chains = 1,refresh=1,control=list(adapt_delta=0.9),verbose=T)
 
 
 #summary(do.call(rbind, args = get_sampler_params(fit2, inc_warmup = TRUE)),
