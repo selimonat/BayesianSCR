@@ -9,13 +9,21 @@ scr_get_stan_data<- function(cfg){
   out = scr_load_data(plot=cfg$plot,resample_to_fs = cfg$resample_to_fs)
   data.scr = out$data.scr
   data.scr.resamp = out$data.scr.resamp
+
+  if(!is.null(cfg$subject)&length(cfg$subject)!=1){
+    # do subselection of subjects
+    data.scr = subset(data.scr,data.scr$subject %in% cfg$subject)
+    data.scr.resamp = subset(data.scr.resamp,data.scr.resamp$subject %in% cfg$subject)
+    #cfg$subject = NULL
+  }
+  
   # generate the appropriate data_stan structure
-  data_stan = scr_stan_data(data.scr,data.scr.resamp,subselect = cfg$subject,cfg = cfg)
+  data_stan = scr_stan_data(data.scr,data.scr.resamp,cfg = cfg)
   
-  
+  #browser()
   # plot one subject if neccesary
   if (cfg$plot){
-   if(is.null(cfg$subject)){
+   if(is.null(cfg$subject) | length(cfg$subject)!=1){
      #multisubject
     # p = ggplot(data.frame(x=data_stan$x_per_subject[1:data_stan$ntime_per_subject[1]],scr=data_stan$scr[1:data_stan$ntime_per_subject[1]]))+geom_line(aes(x=x,y=scr))+
     #   geom_vline(data=data.frame(),aes(x=NULL,y=NULL,xintercept=data_stan$onset[1:data_stan$nonset[1]]))

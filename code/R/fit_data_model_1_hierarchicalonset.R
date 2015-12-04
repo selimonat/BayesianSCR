@@ -3,18 +3,12 @@ if (1==0){
   cfg_grid = list(nchains = 1,
              gridOutputPath = file.path('./gridoutput'),
              requirements = 'mem=2G,h=!ramsauer.ikw.uni-osnabrueck.de',
-             job_name = 'scr_singlesub'
+             job_name = 'scr_singlesub',
+             script_name = 'fit_data_model_1_hierarchicalonset.R'
   )
   
-  t = '1:4'
-  #t = '1'
-  cmd=paste0('qsub -cwd -t ',t,
-             ' -o ', cfg_grid$gridOutputPath, '/ -e ', cfg_grid$gridOutputPath, '/',
-             ' -l ', cfg_grid$requirements, 
-             ' -N ', cfg_grid$job_name, 
-             ' -pe default ', 1,
-             ' -q nbp.q fit_data_model_1_hierarchicalonset.R')
-  system(cmd)
+  source('call_grid')
+  call_grid(cfg_grid)
 }
 
 library(ggplot2)

@@ -9,8 +9,13 @@ scr_stan_init<- function(resamp,subject=NULL){
   
   y =   ddply(mlFit,.(subject),summarise,l = mean(latency),t1=mean(tau1),t2=mean(tau2),a=mean(amp))
   
-  
-  if (is.null(subject)){
+  #browser()
+  if (is.null(subject)|length(subject)!=1){
+    if (!is.null(subject)){
+      y = y[y$subject %in% subject,]
+      mlFit = mlFit[mlFit$subject %in% subject,]
+    }    
+      
       l = list(
         m_tau1 = mean(y$t1),
         m_tau2 = mean(y$t2),
