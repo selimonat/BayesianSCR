@@ -2,10 +2,13 @@ scr_stan_data<-function(data.scr,data.scr.resamp,subselect = -99,cfg){
   
 if(subselect!=-99)stop('subselect is deprecated')
   
-  if (!is.null(cfg$subject)|length(cfg$subject)!=1){
-    data.scrSL = subset(data.scr,data.scr$subject %in% cfg$subject)
-    data.scrSL.resamp = subset(data.scr.resamp,data.scr.resamp$subject %in% cfg$subject)
-    
+  if (is.null(cfg$subject)|length(cfg$subject)!=1){
+    print('multisubject found')
+    #browser()
+    if(!is.null(cfg$subject)){
+    data.scr = subset(data.scr,data.scr$subject %in% cfg$subject)
+    data.scr.resamp = subset(data.scr.resamp,data.scr.resamp$subject %in% cfg$subject)
+    }
     data_stan <- list(
       nsubject = length(unique(data.scr.resamp$subject)),
       nonset=(as.numeric(daply(data.scr,.(subject),summarise,sum(onset)))), # number of onsets * nconditions * subject, for the simulation only!
@@ -19,6 +22,10 @@ if(subselect!=-99)stop('subselect is deprecated')
     
     
   }else{
+    print('single subject found')
+    data.scrSL = subset(data.scr,data.scr$subject %in% cfg$subject)
+    data.scrSL.resamp = subset(data.scr.resamp,data.scr.resamp$subject %in% cfg$subject)
+    
     data_stan <- list(
       ntime=length(data.scrSL.resamp$time), # number of timepoints
       ntrial=sum(data.scrSL$onset), # number of onsets * nconditions

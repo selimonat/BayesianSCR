@@ -20,7 +20,6 @@ scr_get_stan_data<- function(cfg){
   # generate the appropriate data_stan structure
   data_stan = scr_stan_data(data.scr,data.scr.resamp,cfg = cfg)
   
-  #browser()
   # plot one subject if neccesary
   if (cfg$plot){
    if(is.null(cfg$subject) | length(cfg$subject)!=1){

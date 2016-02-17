@@ -8,12 +8,13 @@ scr_stan_grid_collect <-function(cfg,date=NULL){
   
   show(paste0('Loading ',length(files),' files'))
   fitList = NULL
+  #browser()
+  
   for(k in files){
     load(paste0(full.path,k))
     fitList = c(fitList,fit) 
   }
   fit = rstan::sflist2stanfit(fitList)
-  
   
   return(fit)
   

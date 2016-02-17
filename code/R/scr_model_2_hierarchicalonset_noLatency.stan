@@ -88,7 +88,7 @@ transformed parameters {
       maxamp <- fabs(exp(-maxx/tau2[sub]) - exp(-maxx/tau1[sub]));
       
       for(on in 1:nonset[sub]){
-        xx <- segment(x_per_subject,posTime,ntime_per_subject[sub]) - onset[posonset+on-1] -12;#for now:latency fixed#latency[sub,condition[on]];
+        xx <- segment(x_per_subject,posTime,ntime_per_subject[sub]) - onset[posonset+on-1] -1;#for now:latency fixed#latency[sub,condition[on]];
         c          <- amp_per_onset[condition[on],posonset+on-1]/maxamp;
         
         posPositive <-head(sort_indices_asc(xx .* xx),1);

@@ -1,5 +1,4 @@
 data {
-  
   int ntrial;#number of stimuli
   int ntime; # number of timepoints
   int ncondition; # number of conditions
@@ -7,25 +6,23 @@ data {
   vector[ntime] x;
   real<lower=0,upper=ntime> onset[ntrial]; # 
   int<lower=1,upper=ncondition> condition[ntrial]; # which Condition [a/b]?
-  #real latency;
 }
 
-transformed data{
+transformed data{  
 }
 
 parameters {
- # vector <lower=0>[ncondition] latency;
+#  vector <lower=0>[ncondition] latency;
+  int<lower=0>latency;
   vector <lower=0>[ncondition] amp;
   vector <lower=0>[ncondition] amp_sigma;
   matrix <lower=0>[ncondition,ntrial] amp_per_onset;
   real <lower=0> tau1;
   real <lower=0,upper=tau1> tau2;
   real <lower=0> scr_sigma;
-  
 }
 
 transformed parameters {
-  
 }
 model {
   real maxx;
@@ -49,12 +46,12 @@ model {
   scr_hat      <- rep_vector(0,ntime);
   for(tr in 1:ntrial){
     
-    xx <- x - onset[tr]-1;
+    xx <- x - onset[tr]-latency[condition[tr]];
     posPositive <-head(sort_indices_asc(xx .* xx),1);
     
     c          <- amp_per_onset[condition[tr],tr]/maxamp;
     
-    for(t in posPositive[1]:min(posPositive[1]+40,ntime)){
+    for(t in posPositive[1]:min(posPositive[1]+100,ntime)){
       
       scr_hat[t]   <- scr_hat[t] + c * (exp(-xx[t]/tau1) - exp(-xx[t]/(tau2)));
       

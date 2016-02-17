@@ -27,10 +27,11 @@ source('generate_scr_data.R')
 cfg = list(resample_to_fs =2,
            orgsamplingrate=10,
            adapt_delta=0.8,
+           subject = -15:-2,
            model='scr_model_2_hierarchicalonset_noLatency.stan',
            plot=T)
 ```
-We fit without latency parameters
+
 ```{r select one and downsample ,fig.height=15}
 source('scr_get_stan_data.R')
 data = scr_get_stan_data(cfg)
@@ -38,7 +39,7 @@ data = scr_get_stan_data(cfg)
 
 ```{r fit stan}
 source('scr_stan_grid_collect.R')
-fit = scr_stan_grid_collect(cfg,date='2015-12-02')
+fit = scr_stan_grid_collect(cfg,date='2015-12-16')
 #grid engine saving
 #save(fit,file= file.path(dir,name))
 ```
@@ -46,26 +47,16 @@ fit = scr_stan_grid_collect(cfg,date='2015-12-02')
 ```{r plot some mcmc plots}
 # Plotting
 
-traceplot(fit,pars=c('m_amp','m_tau1','m_tau2','m_scr_sigma'),inc_warmup=T)
-traceplot(fit,pars=c('s_amp','s_tau1','s_tau2','s_scr_sigma'),inc_warmup=T)
-#traceplot(fit,pars=c('m_amp','m_latency','m_tau1','m_tau2','m_scr_sigma'),inc_warmup=T)
-#traceplot(fit,pars=c('s_amp','s_latency','s_tau1','s_tau2','s_scr_sigma'),inc_warmup=T)
+#traceplot(fit,pars=c('m_amp','m_tau1','m_tau2','m_scr_sigma'),inc_warmup=T)
+#traceplot(fit,pars=c('s_amp','s_tau1','s_tau2','s_scr_sigma'),inc_warmup=T)
+traceplot(fit,pars=c('m_amp','m_latency','m_tau1','m_tau2','m_scr_sigma'),inc_warmup=T)
+traceplot(fit,pars=c('s_amp','s_latency','s_tau1','s_tau2','s_scr_sigma'),inc_warmup=T)
 
-sub = 2
-#traceplot(fit,pars=laply(c('amp[%d,1]','latency[%d,1]','tau1[%d]','tau2[%d]','scr_sigma[%d]'),.fun=function(x)sprintf(x,sub)),inc_warmup=T)
+sub = 4
+traceplot(fit,pars=laply(c('amp[%d,1]','latency[%d,1]','tau1[%d]','tau2[%d]','scr_sigma[%d]'),.fun=function(x)sprintf(x,sub)),inc_warmup=T)
 
 traceplot(fit,pars=laply('amp_per_onset[1,2]',.fun=function(x)sprintf(x,sub)),inc_warmup=T)
-#S = ggmcmc::ggs(fit)
-#ggmcmc::ggs_autocorrelation(S)
-#ggmcmc::ggs_caterpillar(S)
 
-
-
-
-  sub = 2
-  #traceplot(fit,pars=laply(c('amp[%d,1]','latency[%d,1]','tau1[%d]','tau2[%d]','scr_sigma[%d]'),.fun=function(x)sprintf(x,sub)),inc_warmup=T)
-  
-  traceplot(fit,pars=laply('amp_per_onset[1,2]',.fun=function(x)sprintf(x,sub)),inc_warmup=T)
 
 ```
 It is clear that the model did not converge

@@ -14,7 +14,7 @@ transformed data{
 }
 
 parameters {
- # vector <lower=0>[ncondition] latency;
+  # vector <lower=0>[ncondition] latency;
   vector <lower=0>[ncondition] amp;
   vector <lower=0>[ncondition] amp_sigma;
   matrix <lower=0>[ncondition,ntrial] amp_per_onset;
@@ -40,7 +40,8 @@ model {
   { #curly brackets allow for local integer usage
   vector[ntime] xx;
   int posPositive[1];
-  
+  int t2;
+  int t1;
   real c;
   
   maxx   <- tau1 * tau2 * log(tau1/tau2) / (tau1 - tau2);
@@ -54,11 +55,15 @@ model {
     
     c          <- amp_per_onset[condition[tr],tr]/maxamp;
     
-    for(t in posPositive[1]:min(posPositive[1]+40,ntime)){
+    t2 <- min(posPositive[1]+40,ntime); # I cannot directly define the vector t = t1:t2 because the size is changing and stan does not like that
+    t1 <- posPositive[1];
+    scr_hat[t1:t2] <- scr_hat[t1:t2] + c*exp(-xx[t1:t2]/tau1)-exp( -xx[t1:t2]/tau2);
+    
+    #for(t in posPositive[1]:){
       
-      scr_hat[t]   <- scr_hat[t] + c * (exp(-xx[t]/tau1) - exp(-xx[t]/(tau2)));
+    #  scr_hat[t]   <- scr_hat[t] + c * (exp(-xx[t]/tau1) - exp(-xx[t]/(tau2)));
       
-    }# time loop
+    #}# time loop
   } # trial loop
   }#curly
   

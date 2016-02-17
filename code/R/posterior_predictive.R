@@ -1,5 +1,5 @@
 posterior_predictive_single = function(params_org,x,niter=100,onsets,debug=F){
-  if(class(params_org)=='stanfit') params=extract(params_org,pars=c('amp','latency','tau1','tau2'))
+  params=ifelse(class(params_org)=='stanfit',extract(params_org,pars=c('amp','latency','tau1','tau2')),params_org)
   params = data.frame(params)
   nOnsets = length(unlist(onsets))#nT
   nMCCSamples= dim(params$tau1)
@@ -37,7 +37,7 @@ posterior_predictive_single = function(params_org,x,niter=100,onsets,debug=F){
 
 
 posterior_predictive_group = function(params_org,x,niter=100,nsubjects=10,onsets,debug=F){
-  if(class(params_org)=='stanfit') params=extract(params_org,pars=c('m_amp','s_amp','m_latency','s_latency','m_tau1','s_tau1','m_tau2','s_tau2','m_scr_sigma','s_scr_sigma'))
+  params=ifelse(class(params_org)=='stanfit',extract(params_org,pars=c('m_amp','s_amp','m_latency','s_latency','m_tau1','s_tau1','m_tau2','s_tau2','m_scr_sigma','s_scr_sigma')),params_org)
   params = data.frame(params)
   nOnsets = length(unlist(onsets))#nT
   nMCCSamples= dim(params$m_tau1)

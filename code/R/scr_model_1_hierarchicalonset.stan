@@ -50,7 +50,7 @@ model {
       
       c          <- amp_per_onset[condition[tr],tr]/maxamp;
       
-      for(t in posPositive[1]:min(posPositive[1]+40,ntime)){
+      for(t in posPositive[1]:min(posPositive[1]+100,ntime)){
         
         scr_hat[t]   <- scr_hat[t] + c * (exp(-xx[t]/tau1) - exp(-xx[t]/(tau2)));
         

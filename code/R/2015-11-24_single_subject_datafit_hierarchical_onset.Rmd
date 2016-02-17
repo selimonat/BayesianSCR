@@ -21,11 +21,10 @@ options(mc.cores = parallel::detectCores())
 source('generate_scr_data.R')
 
 
-
 cfg = list(resample_to_fs = 2,
            orgsamplingrate = 10,
            adapt_delta=0.8,
-           subject=42,
+           subject=-3,
            model='scr_model_1_hierarchicalonset.stan',
            plot=T)
 ```
@@ -34,12 +33,27 @@ This is all the data of the baseline condition we want to model. I remove all da
 ```{r select one and downsample}
 
 source('scr_get_stan_data.R')
-data = scr_get_stan_data(cfg)
+if(any(cfg$subject<0)){
+  # negative subjects = simulation
+  set.seed(1)
+  source('scr_get_stan_data_simulation.R')
+  data = scr_get_stan_data_simulation(cfg)
+  
+  qplot(x=1:500,y=data$data_stan$scr[1:500],geom='line')
+  set.seed( as.integer((as.double(Sys.time())*1000+Sys.getpid())%%2^31) )
+}else{
+  
+  # Real data
+  source('scr_get_stan_data.R')
+  data = scr_get_stan_data(cfg)
+}
+
 ```
 
 ```{r fit stan}
 source('scr_stan_grid_collect.R')
-fit = scr_stan_grid_collect(cfg,date='2015-12-02')
+fit = scr_stan_grid_collect(cfg,date='2015-12-15')
+
 
 
 ```
@@ -47,10 +61,11 @@ fit = scr_stan_grid_collect(cfg,date='2015-12-02')
 ```{r plot some mcmc plots}
 # Plotting
 
-traceplot(fit,pars=c('amp','latency','tau1','tau2','scr_sigma'),inc_warmup=F)
+traceplot(fit,pars=c('amp','latency','tau1','tau2','scr_sigma'),inc_warmup=T)
 S = ggmcmc::ggs(fit)
 ggmcmc::ggs_autocorrelation(S)
-ggmcmc::ggs_caterpillar(S)
+ggmcmc::ggs_density(S)
+
 
 ```
 
@@ -86,6 +101,7 @@ b = cbind(b,alpha=alpha <- ifelse(b$type=='post', 0.1, 1),
 ggplot()+geom_line(data=b,aes(x=time,y=scr,colour=factor(type),group=interaction(iter,type),alpha=alpha),size=1)+
   geom_segment(data=x$onset,aes(y=-Inf,yend=0,x=onset,xend=onset))
 #ggsave(filename=paste0('../../graphs/fits/',format(Sys.time(), '%Y-%m-%d'),'_singleSub_',cfg$subject,'.pdf'))
+
 
 
 ```
